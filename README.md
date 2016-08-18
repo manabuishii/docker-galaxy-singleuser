@@ -8,7 +8,9 @@ Galaxy Docker run as single user
 ./run-container
 ```
 
-# Output
+# How it works
+
+change ***galaxy***, ***postgresql*** and ***nginx worker*** to single user (Default: whoami)
 
 ```
 root@bdaa84d27a5f:/galaxy-central# ps auxf
