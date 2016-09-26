@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/manabuishii/docker-galaxy-singleuser.svg?branch=master)](https://travis-ci.org/manabuishii/docker-galaxy-singleuser)
+
 # docker-galaxy-singleuser
 Galaxy Docker run as single user
 
