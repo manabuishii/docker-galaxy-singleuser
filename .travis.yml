@@ -1,0 +1,13 @@
+sudo: required
+
+services:
+  - docker
+
+git:
+  submodules: false
+
+script:
+  - GALAXY_USER=galaxy GALAXY_CONTAINER=bgruening/galaxy-stable:latest ./run-container.sh
+  - sleep 15
+  - docker exec -ti galaxytest ps auxf | awk '{print $1}' | sort | uniq > actual.txt
+  - diff actual.txt expected.txt
