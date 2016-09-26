@@ -50,3 +50,10 @@ manabu     113  1.0  1.4 1102020 114176 ?      Sl   09:06   0:01  \_ /galaxy_ven
 manabu     132  0.0  0.2 836692 19380 ?        Sl   09:06   0:00  \_ node /galaxy-central/lib/galaxy/web/proxy/js/lib/main.js --sessions database/session_map.sqlite --ip 0.0.0.0 --port 8800
 root       143  0.0  0.0  92820  1224 ?        Sl   09:07   0:00 /usr/sbin/munged -f
 ```
+
+# travis test
+
+```
+docker exec -ti galaxytest ps auxf | awk '{print $1}' | sort | uniq > actual.txt
+diff actual.txt expected.txt
+```
