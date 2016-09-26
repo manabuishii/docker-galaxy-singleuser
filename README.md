@@ -12,6 +12,8 @@ Galaxy Docker run as single user
 
 change ***galaxy***, ***postgresql*** and ***nginx worker*** to single user (Default: whoami)
 
+root and nobody(proftpd) is still there
+
 ```
 root@bdaa84d27a5f:/galaxy-central# ps auxf
 USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
@@ -51,9 +53,12 @@ manabu     132  0.0  0.2 836692 19380 ?        Sl   09:06   0:00  \_ node /galax
 root       143  0.0  0.0  92820  1224 ?        Sl   09:07   0:00 /usr/sbin/munged -f
 ```
 
+
 # travis test
 
 ```
 docker exec -ti galaxytest ps auxf | awk '{print $1}' | sort | uniq > actual.txt
 diff actual.txt expected.txt
 ```
+
+
