@@ -1,0 +1,4 @@
+USER
+galaxy
+nobody
+root
