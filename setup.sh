@@ -4,11 +4,16 @@ chown -R ${GALAXY_USER} /galaxy-central /shed_tools
 usermod -aG postgres ${GALAXY_USER}
 usermod -aG ssl-cert ${GALAXY_USER}
 # for nginx
+# nginx user
 sed -i -e "1c\user  ${GALAXY_USER} galaxy;" /etc/nginx/nginx.conf
+## nginx port
+sed -i -e "s/listen 80/listen 20080/g" /etc/nginx/nginx.conf
 # for galaxy
 sed -i -e "s/= galaxy/= ${GALAXY_USER}/g" /etc/supervisor/conf.d/galaxy.conf
 # for postgresql
 sed -i -e "s/= postgres/= ${GALAXY_USER}/g" /etc/supervisor/conf.d/galaxy.conf
+## postgresql port
+sed -i -e "s/port = [0-9]*/port = 15432/g" /etc/postgresql/9.3/main/postgresql.conf
 chown -R ${GALAXY_POSTGRES_UID}:${GALAXY_POSTGRES_GID} /var/run/postgresql
 chown -R ${GALAXY_POSTGRES_UID}:${GALAXY_POSTGRES_GID} /var/lib/postgresql
 chown -R ${GALAXY_POSTGRES_UID}:${GALAXY_POSTGRES_GID} /var/log/postgresql
