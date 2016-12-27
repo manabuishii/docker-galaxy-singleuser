@@ -7,13 +7,23 @@ usermod -aG ssl-cert ${GALAXY_USER}
 # nginx user
 sed -i -e "1c\user  ${GALAXY_USER} galaxy;" /etc/nginx/nginx.conf
 ## nginx port
-sed -i -e "s/listen 80/listen 20080/g" /etc/nginx/nginx.conf
+if [ "x$GALAXY_NGINX_PORT" != "x" ]
+then
+  sed -i -e "s/listen 80/listen ${GALAXY_NGINX_PORT}/g" /etc/nginx/nginx.conf
+fi
 # for galaxy
 sed -i -e "s/= galaxy/= ${GALAXY_USER}/g" /etc/supervisor/conf.d/galaxy.conf
 # for postgresql
 sed -i -e "s/= postgres/= ${GALAXY_USER}/g" /etc/supervisor/conf.d/galaxy.conf
 ## postgresql port
-sed -i -e "s/port = [0-9]*/port = 15432/g" /etc/postgresql/9.3/main/postgresql.conf
+if [ "x$GALAXY_POSTGRES_PORT" != "x" ]
+then
+  sed -i -e "s/port = [0-9]*/port = ${GALAXY_POSTGRES_PORT}/g" /etc/postgresql/9.3/main/postgresql.conf
+  if [ "$GALAXY_CONFIG_DATABASE_CONNECTION_NEED_REWRITE" == "true" ]
+  then
+    GALAXY_CONFIG_DATABASE_CONNECTION="postgresql://galaxy:galaxy@localhost:${GALAXY_POSTGRES_PORT}/galaxy?client_encoding=utf8"
+  fi
+fi
 chown -R ${GALAXY_POSTGRES_UID}:${GALAXY_POSTGRES_GID} /var/run/postgresql
 chown -R ${GALAXY_POSTGRES_UID}:${GALAXY_POSTGRES_GID} /var/lib/postgresql
 chown -R ${GALAXY_POSTGRES_UID}:${GALAXY_POSTGRES_GID} /var/log/postgresql
