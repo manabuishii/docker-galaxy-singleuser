@@ -9,7 +9,7 @@ git:
 script:
   - GALAXY_USER=galaxy GALAXY_CONTAINER=bgruening/galaxy-stable:latest ./run-container.sh
   - sleep 15
-  - docker logs
+  - docker logs galaxytest
   - docker exec -ti galaxytest ps auxf
   - docker exec -ti galaxytest ps auxf | awk '{print $1}' | sort | uniq | grep -v USER > actual.txt
   - diff -u actual.txt expected.txt
