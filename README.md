@@ -10,6 +10,32 @@ Galaxy Docker run as single user
 ./run-container
 ```
 
+
+## Run by bash script
+
+```
+GALAXY_POSTGRES_PORT=15432 \
+./run-container.sh
+```
+
+
+### more advance
+
+Using host net and change Nginx and PostgreSQL port
+
+```
+GALAXY_CONTAINER_NET_OPTION=--net=host \
+GALAXY_POSTGRES_PORT=15432 \
+GALAXY_NGINX_PORT=20080 \
+./run-container.sh
+```
+
+### Other option
+
+```
+GALAXY_CONFIG_DATABASE_CONNECTION='postgresql://galaxy:galaxy@localhost:15432/galaxy?client_encoding=utf8'
+```
+
 # How it works
 
 change ***galaxy***, ***postgresql*** and ***nginx worker*** to single user (Default: whoami)
@@ -64,3 +90,8 @@ diff actual.txt expected.txt
 ```
 
 
+
+
+# TODO
+
+* [ ] galaxy_web, uwsgi port 4001(http) and 9191(stats)
