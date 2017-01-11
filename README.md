@@ -102,7 +102,17 @@ Mainly for SGE and slurmd.
 ```
 
 
+# Old Galaxy Docker container and docker
 
+```
+SGE_MASTER_HOST=yoursgehost \
+GALAXY_APPLY_2790=true \
+GALAXY_CONTAINER_NET_OPTION=--net=host \
+GALAXY_POSTGRES_PORT=15432 \
+GALAXY_NGINX_PORT=20080 \
+GALAXY_CLEANUP_JOB_NEVER=true \
+./run-container.sh
+```
 
 # TODO
 

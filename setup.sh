@@ -48,6 +48,27 @@ then
   wget --quiet -O /tmp/2790.diff https://patch-diff.githubusercontent.com/raw/galaxyproject/galaxy/pull/2790.diff
   patch -N -p1 < /tmp/2790.diff
 fi
+# cleanup_job
+if [ "$GALAXY_CLEANUP_JOB_NEVER" == "true" ]
+then
+  sed -i -e 's/^#cleanup_job = always/cleanup_job = never/' /etc/galaxy/galaxy.ini
+fi
+# using Sun Grid Engine
+if [ "$GALAXY_SGE_SUPPORT" == "true" ]
+then
+  echo "Download gridengine"
+  apt-get -qq update && apt-get install --no-install-recommends -y gridengine-common gridengine-drmaa1.0
+  echo "$SGE_MASTER_HOST" > /var/lib/gridengine/default/common/act_qmaster
+fi
+# using test job for docker
+if [ "$GALAXY_DOCKER_TEST_JOB" == "true" ]
+then
+  # just throw job which execute "hostname" command
+  # maybe it returns some hex id only
+  git clone https://github.com/manabuishii/docker-galaxy-gridengine.git
+  ln -s ../docker-galaxy-gridengine/outputhostname tools/
+  export GALAXY_CONFIG_TOOL_CONFIG_FILE=$PWD/docker-galaxy-gridengine/tool_conf.xml
+fi
 
 # start
 /usr/bin/startup
