@@ -30,6 +30,12 @@ chown -R ${GALAXY_POSTGRES_UID}:${GALAXY_POSTGRES_GID} /var/log/postgresql
 chown -R ${GALAXY_POSTGRES_UID}:${GALAXY_POSTGRES_GID} /etc/postgresql
 #
 sed -i -e "s/postgres:postgres/${GALAXY_POSTGRES_UID}:${GALAXY_POSTGRES_GID}/g" /usr/local/bin/export_user_files.py
+# remove data_directory from postgresql.conf for persistent data
+# https://github.com/bgruening/docker-galaxy-stable/commit/808623323711eb9f82190b3f65098d0d82fbbbd2
+if [ "$GALAXY_APPLY_808623" == "true" ]
+then
+  sed -i -e "s#data_directory = '/var/lib/postgresql/9.3/main/'##" /etc/postgresql/9.3/main/postgresql.conf
+fi
 # maybe this is only needed on my environment
 cp /etc/ssl/private/ssl-cert-snakeoil.key /etc/
 chown root:ssl-cert /etc/ssl-cert-snakeoil.key
