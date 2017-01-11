@@ -21,7 +21,7 @@ then
   sed -i -e "s/port = [0-9]*/port = ${GALAXY_POSTGRES_PORT}/g" /etc/postgresql/9.3/main/postgresql.conf
   if [ "$GALAXY_CONFIG_DATABASE_CONNECTION_NEED_REWRITE" == "true" ]
   then
-    GALAXY_CONFIG_DATABASE_CONNECTION="postgresql://galaxy:galaxy@localhost:${GALAXY_POSTGRES_PORT}/galaxy?client_encoding=utf8"
+    export GALAXY_CONFIG_DATABASE_CONNECTION="postgresql://galaxy:galaxy@localhost:${GALAXY_POSTGRES_PORT}/galaxy?client_encoding=utf8"
   fi
 fi
 chown -R ${GALAXY_POSTGRES_UID}:${GALAXY_POSTGRES_GID} /var/run/postgresql
