@@ -39,7 +39,8 @@ ln -s  /var/lib/postgresql/9.3/mainorg /var/lib/postgresql/9.3/main
 # apply 2790 patch
 if [ "$GALAXY_APPLY_2790" == "true" ]
 then
-  patch -N -p1 < 2790.diff
+  wget --quiet -O /tmp/2790.diff https://patch-diff.githubusercontent.com/raw/galaxyproject/galaxy/pull/2790.diff
+  patch -N -p1 < /tmp/2790.diff
 fi
 
 # start
