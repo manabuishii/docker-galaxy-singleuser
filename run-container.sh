@@ -56,6 +56,7 @@ fi
 docker run -d \
            --name ${GALAXY_CONTAINER_NAME} \
            ${GALAXY_CONTAINER_NET_OPTION} \
+           -e GALAXY_APPLY_2790=${GALAXY_APPLY_2790} \
            -e GALAXY_USER=${GALAXY_USER} \
            -e GALAXY_UID=${GALAXY_UID} \
            -e GALAXY_POSTGRES_UID=${GALAXY_POSTGRES_UID} \
@@ -67,5 +68,6 @@ docker run -d \
            -v $PWD/job_conf.xml.local:/etc/galaxy/job_conf.xml \
            -v $PWD/export:/export \
            -v $PWD/setup.sh:/galaxy-central/setup.sh \
+           -v $PWD/2790.diff:/galaxy-central/2790.diff \
            ${GALAXY_CONTAINER} \
            /galaxy-central/setup.sh

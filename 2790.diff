@@ -1,0 +1,219 @@
+diff --git a/lib/galaxy/jobs/__init__.py b/lib/galaxy/jobs/__init__.py
+index 9fca963..7009eb1 100644
+--- a/lib/galaxy/jobs/__init__.py
++++ b/lib/galaxy/jobs/__init__.py
+@@ -469,13 +469,20 @@ def __get_params(self, parent):
+         rval = {}
+         for param in parent.findall('param'):
+             key = param.get('id')
+-            param_value = param.text
++            if key in ["container", "container_override"]:
++                from galaxy.tools.deps import requirements
++                containers = map(requirements.container_from_element, list(param))
++                param_value = map(lambda c: c.to_dict(), containers)
++            else:
++                param_value = param.text
++
+             if 'from_environ' in param.attrib:
+                 environ_var = param.attrib['from_environ']
+                 param_value = os.environ.get(environ_var, param_value)
+             elif 'from_config' in param.attrib:
+                 config_val = param.attrib['from_config']
+                 param_value = self.app.config.config_dict.get(config_val, param_value)
++
+             rval[key] = param_value
+         return rval
+ 
+diff --git a/lib/galaxy/jobs/command_factory.py b/lib/galaxy/jobs/command_factory.py
+index 2c476a2..f3fe7cc 100644
+--- a/lib/galaxy/jobs/command_factory.py
++++ b/lib/galaxy/jobs/command_factory.py
+@@ -55,13 +55,13 @@ def build_command(
+     # One could imagine also allowing dependencies inside of the container but
+     # that is too sophisticated for a first crack at this - build your
+     # containers ready to go!
+-    if not container:
++    if not container or container.resolve_dependencies:
+         __handle_dependency_resolution(commands_builder, job_wrapper, remote_command_params)
+ 
+     if (container and modify_command_for_container) or job_wrapper.commands_in_new_shell:
+         if container and modify_command_for_container:
+             # Many Docker containers do not have /bin/bash.
+-            external_command_shell = "/bin/sh"
++            external_command_shell = container.shell
+         else:
+             external_command_shell = shell
+         externalized_commands = __externalize_commands(job_wrapper, external_command_shell, commands_builder, remote_command_params)
+diff --git a/lib/galaxy/tools/deps/containers.py b/lib/galaxy/tools/deps/containers.py
+index 49f0322..2cc8247 100644
+--- a/lib/galaxy/tools/deps/containers.py
++++ b/lib/galaxy/tools/deps/containers.py
+@@ -9,6 +9,8 @@
+ 
+ from galaxy.util import asbool
+ from ..deps import docker_util
++from .requirements import ContainerDescription
++from .requirements import DEFAULT_CONTAINER_RESOLVE_DEPENDENCIES, DEFAULT_CONTAINER_SHELL
+ 
+ import logging
+ log = logging.getLogger(__name__)
+@@ -55,10 +57,18 @@ def __destination_container(container_description=None, container_id=None, conta
+                 container_type,
+                 tool_info,
+                 destination_info,
+-                job_info
++                job_info,
++                container_description,
+             )
+             return container
+ 
++        if "container_override" in destination_info:
++            container_description = ContainerDescription.from_dict(destination_info["container_override"][0])
++            if container_description:
++                container = __destination_container(container_description)
++                if container:
++                    return container
++
+         # Is destination forcing Galaxy to use a particular container do it,
+         # this is likely kind of a corner case. For instance if deployers
+         # do not trust the containers annotated in tools.
+@@ -90,6 +100,13 @@ def __destination_container(container_description=None, container_id=None, conta
+ 
+         # If we still don't have a container, check to see if any container
+         # types define a default container id and use that.
++        if "container" in destination_info:
++            container_description = ContainerDescription.from_dict(destination_info["container"][0])
++            if container_description:
++                container = __destination_container(container_description)
++                if container:
++                    return container
++
+         for container_type in CONTAINER_CLASSES.keys():
+             container_id = self.__default_container_id(container_type, destination_info)
+             if container_id:
+@@ -135,7 +152,7 @@ def __default_container_id(self, container_type, destination_info):
+             return self.__build_container_id_from_parts(container_type, destination_info, mode="default")
+         return None
+ 
+-    def __destination_container(self, container_id, container_type, tool_info, destination_info, job_info):
++    def __destination_container(self, container_id, container_type, tool_info, destination_info, job_info, container_description=None):
+         # TODO: ensure destination_info is dict-like
+         if not self.__container_type_enabled(container_type, destination_info):
+             return NULL_CONTAINER
+@@ -144,7 +161,7 @@ def __destination_container(self, container_id, container_type, tool_info, desti
+         # container type is - there should be more thought put into this.
+         # Checking which are availalbe - settings policies for what can be
+         # auto-fetched, etc....
+-        return CONTAINER_CLASSES[container_type](container_id, self.app_info, tool_info, destination_info, job_info)
++        return CONTAINER_CLASSES[container_type](container_id, self.app_info, tool_info, destination_info, job_info, container_description)
+ 
+     def __container_type_enabled(self, container_type, destination_info):
+         return asbool(destination_info.get("%s_enabled" % container_type, False))
+@@ -208,12 +225,21 @@ def __init__(self, working_directory, tool_directory, job_directory):
+ class Container( object ):
+     __metaclass__ = ABCMeta
+ 
+-    def __init__(self, container_id, app_info, tool_info, destination_info, job_info):
++    def __init__(self, container_id, app_info, tool_info, destination_info, job_info, container_description):
+         self.container_id = container_id
+         self.app_info = app_info
+         self.tool_info = tool_info
+         self.destination_info = destination_info
+         self.job_info = job_info
++        self.container_description = container_description
++
++    @property
++    def resolve_dependencies(self):
++        return DEFAULT_CONTAINER_RESOLVE_DEPENDENCIES if not self.container_description else self.container_description.resolve_dependencies
++
++    @property
++    def shell(self):
++        return DEFAULT_CONTAINER_SHELL if not self.container_description else self.container_description.shell
+ 
+     @abstractmethod
+     def containerize_command(self, command):
+diff --git a/lib/galaxy/tools/deps/requirements.py b/lib/galaxy/tools/deps/requirements.py
+index 452d955..2b209f6 100644
+--- a/lib/galaxy/tools/deps/requirements.py
++++ b/lib/galaxy/tools/deps/requirements.py
+@@ -1,4 +1,4 @@
+-from galaxy.util import xml_text
++from galaxy.util import asbool, xml_text
+ 
+ DEFAULT_REQUIREMENT_TYPE = "package"
+ DEFAULT_REQUIREMENT_VERSION = None
+@@ -27,22 +27,44 @@ def from_dict( dict ):
+ 
+ 
+ DEFAULT_CONTAINER_TYPE = "docker"
++DEFAULT_CONTAINER_RESOLVE_DEPENDENCIES = False
++DEFAULT_CONTAINER_SHELL = "/bin/sh"  # Galaxy assumes bash, but containers are usually thinner.
+ 
+ 
+ class ContainerDescription( object ):
+ 
+-    def __init__( self, identifier=None, type="docker" ):
++    def __init__(
++        self,
++        identifier=None,
++        type=DEFAULT_CONTAINER_TYPE,
++        resolve_dependencies=DEFAULT_CONTAINER_RESOLVE_DEPENDENCIES,
++        shell=DEFAULT_CONTAINER_SHELL,
++    ):
+         self.identifier = identifier
+         self.type = type
++        self.resolve_dependencies = resolve_dependencies
++        self.shell = shell
+ 
+     def to_dict( self ):
+-        return dict(identifier=self.identifier, type=self.type)
++        return dict(
++            identifier=self.identifier,
++            type=self.type,
++            resolve_dependencies=self.resolve_dependencies,
++            shell=self.shell,
++        )
+ 
+     @staticmethod
+     def from_dict( dict ):
+         identifier = dict["identifier"]
+         type = dict.get("type", DEFAULT_CONTAINER_TYPE)
+-        return ContainerDescription( identifier=identifier, type=type )
++        resolve_dependencies = dict.get("resolve_dependencies", DEFAULT_CONTAINER_RESOLVE_DEPENDENCIES)
++        shell = dict.get("shell", DEFAULT_CONTAINER_SHELL)
++        return ContainerDescription(
++            identifier=identifier,
++            type=type,
++            resolve_dependencies=resolve_dependencies,
++            shell=shell,
++        )
+ 
+ 
+ def parse_requirements_from_dict( root_dict ):
+@@ -92,11 +114,20 @@ def parse_requirements_from_xml( xml_root ):
+     if requirements_elem is not None:
+         container_elems = requirements_elem.findall( 'container' )
+ 
+-    containers = []
+-    for container_elem in container_elems:
+-        identifier = xml_text( container_elem )
+-        type = container_elem.get( "type", DEFAULT_CONTAINER_TYPE )
+-        container = ContainerDescription( identifier=identifier, type=type )
+-        containers.append( container )
++    containers = map(container_from_element, container_elems)
+ 
+     return requirements, containers
++
++
++def container_from_element(container_elem):
++    identifier = xml_text(container_elem)
++    type = container_elem.get("type", DEFAULT_CONTAINER_TYPE)
++    resolve_dependencies = asbool(container_elem.get("resolve_dependencies", DEFAULT_CONTAINER_RESOLVE_DEPENDENCIES))
++    shell = container_elem.get("shell", DEFAULT_CONTAINER_SHELL)
++    container = ContainerDescription(
++        identifier=identifier,
++        type=type,
++        resolve_dependencies=resolve_dependencies,
++        shell=shell,
++    )
++    return container

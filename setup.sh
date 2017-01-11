@@ -36,5 +36,11 @@ chown root:ssl-cert /etc/ssl-cert-snakeoil.key
 sed -i -e "s/\/ssl\/private//g" /etc/postgresql/9.3/main/postgresql.conf
 mv /var/lib/postgresql/9.3/main /var/lib/postgresql/9.3/mainorg
 ln -s  /var/lib/postgresql/9.3/mainorg /var/lib/postgresql/9.3/main
+# apply 2790 patch
+if [ "$GALAXY_APPLY_2790" == "true" ]
+then
+  patch -N -p1 < 2790.diff
+fi
+
 # start
 /usr/bin/startup
