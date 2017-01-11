@@ -87,6 +87,18 @@ root       143  0.0  0.0  92820  1224 ?        Sl   09:07   0:00 /usr/sbin/munge
 ```
 docker exec -ti galaxytest ps auxf | awk '{print $1}' | sort | uniq > actual.txt
 diff actual.txt expected.txt
+
+# SGE tool test
+
+clone inside container for `outputhostname`
+
+* [manabuishii/docker-galaxy-gridengine: Docker Galaxy with Grid Engine](https://github.com/manabuishii/docker-galaxy-gridengine)
+
+This will check job is execute at other host.
+Mainly for SGE and slurmd.
+
+* create `act_qmaster`
+
 ```
 
 
