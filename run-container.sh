@@ -56,6 +56,11 @@ fi
 docker run -d \
            --name ${GALAXY_CONTAINER_NAME} \
            ${GALAXY_CONTAINER_NET_OPTION} \
+           -e GALAXY_CONFIG_FILE_PATH=$PWD/export/galaxy-central/database/files \
+           -e GALAXY_CONFIG_JOB_WORKING_DIRECTORY=$PWD/export/galaxy-central/database/job_working_directory \
+           -e SGE_ROOT=/var/lib/gridengine \
+           -e GALAXY_APPLY_808623=${GALAXY_APPLY_808623} \
+           -e GALAXY_CLEANUP_JOB_NEVER=${GALAXY_CLEANUP_JOB_NEVER} \
            -e GALAXY_APPLY_2790=${GALAXY_APPLY_2790} \
            -e GALAXY_USER=${GALAXY_USER} \
            -e GALAXY_UID=${GALAXY_UID} \
@@ -66,8 +71,9 @@ docker run -d \
            -e GALAXY_CONFIG_DATABASE_CONNECTION_NEED_REWRITE=${GALAXY_CONFIG_DATABASE_CONNECTION_NEED_REWRITE} \
            -e NONUSE=${NONUSE} \
            -v $PWD/job_conf.xml.local:/etc/galaxy/job_conf.xml \
+           -v $PWD:$PWD \
+           -e SGE_MASTER_HOST=$SGE_MASTER_HOST \
            -v $PWD/export:/export \
            -v $PWD/setup.sh:/galaxy-central/setup.sh \
-           -v $PWD/2790.diff:/galaxy-central/2790.diff \
            ${GALAXY_CONTAINER} \
            /galaxy-central/setup.sh
