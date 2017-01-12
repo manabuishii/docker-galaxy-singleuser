@@ -50,9 +50,9 @@ then
   patch -N -p1 < /tmp/2790.diff
 fi
 # cleanup_job
-if [ "$GALAXY_CLEANUP_JOB_NEVER" == "true" ]
+if [ "x$GALAXY_CLEANUP_JOB" != "x" ]
 then
-  sed -i -e 's/^#cleanup_job = always/cleanup_job = never/' /etc/galaxy/galaxy.ini
+  sed -i -e "s/^#cleanup_job = always/cleanup_job = ${GALAXY_CLEANUP_JOB}/" /etc/galaxy/galaxy.ini
 fi
 # Install Sun Grid Engine
 if [ "$GALAXY_SGE_CLIENT_INSTALL" == "true" ]
