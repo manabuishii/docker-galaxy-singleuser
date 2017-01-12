@@ -145,7 +145,6 @@ GALAXY_NGINX_PORT=20080 \
 ./run-container.sh
 ```
 
-```
 # TODO
 
 * [ ] galaxy_web, uwsgi port 4001(http) and 9191(stats)
