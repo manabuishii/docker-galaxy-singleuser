@@ -126,6 +126,7 @@ GALAXY_CONTAINER_NET_OPTION=--net=host \
 GALAXY_POSTGRES_PORT=15432 \
 GALAXY_NGINX_PORT=20080 \
 ./run-container.sh
+```
 
 ##
 
