@@ -50,17 +50,46 @@ if [ "x$NONUSE" == "x" ]
 then
   NONUSE="condor,proftp,reports,nodejs"
 fi
-
-
 #
-docker run -d \
+if [ "x$GALAXY_CONFIG_JOB_CONFIG_FILE" != "x" ]
+then
+  # setup own settings for database connection
+  GALAXY_OPTIONS=" ${GALAXY_OPTIONS} -v ${GALAXY_CONFIG_JOB_CONFIG_FILE}:/etc/galaxy/job_conf.xml "
+fi
+# interactive mode mainly for debug
+if [ "x$INTERACTIVE" == "x" ]
+then
+  #
+  if [ "x$DOCKER_COMMAND" == "x" ]
+  then
+    DOCKER_COMMAND="docker run -d "
+  fi
+  #
+  if [ "x$INSIDE_COMMAND" == "x" ]
+  then
+    INSIDE_COMMAND="/galaxy-central/setup.sh"
+  fi
+else
+  #
+  if [ "x$DOCKER_COMMAND" == "x" ]
+  then
+    DOCKER_COMMAND="/usr/bin/docker run  --rm -ti  "
+  fi
+  #
+  if [ "x$INSIDE_COMMAND" == "x" ]
+  then
+    INSIDE_COMMAND="/bin/bash"
+  fi
+fi
+#
+${DOCKER_COMMAND} \
            --name ${GALAXY_CONTAINER_NAME} \
            ${GALAXY_CONTAINER_NET_OPTION} \
            -e GALAXY_CONFIG_FILE_PATH=$PWD/export/galaxy-central/database/files \
            -e GALAXY_CONFIG_JOB_WORKING_DIRECTORY=$PWD/export/galaxy-central/database/job_working_directory \
            -e SGE_ROOT=/var/lib/gridengine \
            -e GALAXY_APPLY_808623=${GALAXY_APPLY_808623} \
-           -e GALAXY_CLEANUP_JOB_NEVER=${GALAXY_CLEANUP_JOB_NEVER} \
+           -e GALAXY_CLEANUP_JOB=${GALAXY_CLEANUP_JOB} \
            -e GALAXY_SGE_CLIENT_INSTALL=${GALAXY_SGE_CLIENT_INSTALL} \
            -e GALAXY_DOCKER_TEST_JOB=${GALAXY_DOCKER_TEST_JOB} \
            -e GALAXY_APPLY_2790=${GALAXY_APPLY_2790} \
@@ -72,10 +101,9 @@ docker run -d \
            ${GALAXY_OPTIONS} \
            -e GALAXY_CONFIG_DATABASE_CONNECTION_NEED_REWRITE=${GALAXY_CONFIG_DATABASE_CONNECTION_NEED_REWRITE} \
            -e NONUSE=${NONUSE} \
-           -v $PWD/job_conf.xml.local:/etc/galaxy/job_conf.xml \
            -v $PWD:$PWD \
            -e SGE_MASTER_HOST=$SGE_MASTER_HOST \
            -v $PWD/export:/export \
            -v $PWD/setup.sh:/galaxy-central/setup.sh \
            ${GALAXY_CONTAINER} \
-           /galaxy-central/setup.sh
+           ${INSIDE_COMMAND}
