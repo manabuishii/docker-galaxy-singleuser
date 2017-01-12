@@ -106,7 +106,6 @@ Mainly for SGE and slurmd.
 
 ```
 SGE_MASTER_HOST=yoursgehost \
-GALAXY_APPLY_2790=true \
 GALAXY_CONTAINER_NET_OPTION=--net=host \
 GALAXY_POSTGRES_PORT=15432 \
 GALAXY_NGINX_PORT=20080 \
@@ -114,6 +113,20 @@ GALAXY_CLEANUP_JOB_NEVER=true \
 ./run-container.sh
 ```
 
+## with some patches already in master
+
+```
+SGE_MASTER_HOST=yoursgehost \
+GALAXY_SGE_CLIENT_INSTALL=true \
+GALAXY_DOCKER_TEST_JOB=true \
+GALAXY_APPLY_808623=true \
+GALAXY_CLEANUP_JOB_NEVER=never \
+GALAXY_APPLY_2790=true \
+GALAXY_CONTAINER_NET_OPTION=--net=host \
+GALAXY_POSTGRES_PORT=15432 \
+GALAXY_NGINX_PORT=20080 \
+./run-container.sh
+```
 # TODO
 
 * [ ] galaxy_web, uwsgi port 4001(http) and 9191(stats)

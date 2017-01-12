@@ -61,6 +61,8 @@ docker run -d \
            -e SGE_ROOT=/var/lib/gridengine \
            -e GALAXY_APPLY_808623=${GALAXY_APPLY_808623} \
            -e GALAXY_CLEANUP_JOB_NEVER=${GALAXY_CLEANUP_JOB_NEVER} \
+           -e GALAXY_SGE_CLIENT_INSTALL=${GALAXY_SGE_CLIENT_INSTALL} \
+           -e GALAXY_DOCKER_TEST_JOB=${GALAXY_DOCKER_TEST_JOB} \
            -e GALAXY_APPLY_2790=${GALAXY_APPLY_2790} \
            -e GALAXY_USER=${GALAXY_USER} \
            -e GALAXY_UID=${GALAXY_UID} \
